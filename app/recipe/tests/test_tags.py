@@ -26,7 +26,7 @@ class PublicTagsApiTests(TestCase):
 
 
 class PrivateTagsApiTests(TestCase):
-    """Tests Authorized user tahs API"""
+    """Tests Authorized user tags API"""
 
     def setUp(self) -> None:
         self.user = create_user(email='test@mail.com', password='Sstring1')
