@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from core.models import Tag, Ingredient, Recipe
+from django.utils.translation import ugettext_lazy as _
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -34,6 +35,16 @@ class RecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ['id', 'title', 'time_minutes', 'price', 'link', 'ingredients', 'tags']
         read_only_fields = ('id',)
+
+    def validate(self, attrs):
+        all_ingredients_belongs_to_user = all(
+            [ingredient.user == self.context['request'].user for ingredient in attrs['ingredients']])
+        all_tags_belongs_to_user = all(
+            [tag.user == self.context['request'].user for tag in attrs['tags']])
+        if not (all_ingredients_belongs_to_user and all_tags_belongs_to_user):
+            msg = _("Attributes doesn't belongs to user")
+            raise serializers.ValidationError(msg, code='bad_request')
+        return attrs
 
 
 class RecipeDetailSerializer(RecipeSerializer):
