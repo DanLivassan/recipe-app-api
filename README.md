@@ -1,2 +1,7 @@
 # recipe-app-api
-Recipe app api source code
+
+For test at recipe-app-api folder run:
+
+*coverage run --source="." app/manage.py test app*
+
+*coverage html*
