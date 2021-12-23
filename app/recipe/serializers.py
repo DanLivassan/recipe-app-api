@@ -37,10 +37,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
     def validate(self, attrs):
-        all_ingredients_belongs_to_user = all(
-            [ingredient.user == self.context['request'].user for ingredient in attrs['ingredients']])
-        all_tags_belongs_to_user = all(
-            [tag.user == self.context['request'].user for tag in attrs['tags']])
+        all_ingredients_belongs_to_user = True
+        all_tags_belongs_to_user = True
+        if 'ingredients' in attrs:
+            all_ingredients_belongs_to_user = all(
+                [ingredient.user == self.context['request'].user for ingredient in attrs['ingredients']])
+        if 'tags' in attrs:
+            all_tags_belongs_to_user = all(
+                [tag.user == self.context['request'].user for tag in attrs['tags']])
         if not (all_ingredients_belongs_to_user and all_tags_belongs_to_user):
             msg = _("Attributes doesn't belongs to user")
             raise serializers.ValidationError(msg, code='bad_request')

@@ -166,3 +166,64 @@ class PrivateRecipeApiTests(TestCase):
 
         res = self.client.post(RECIPE_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_update_recipe(self):
+        """Test updating a recipe with patch"""
+        recipe = sample_recipe(user=self.user)
+        payload = {
+            'title': 'My new recipe title',
+            'time_minutes': 25,
+            'price': 25
+        }
+
+        res = self.client.patch(detail_url(recipe.id), payload)
+        recipe.refresh_from_db()
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        for key in payload.keys():
+            self.assertEqual(payload[key], getattr(recipe, key))
+
+    def test_full_update_recipe(self):
+        """Test updating a recipe with put"""
+        ingredients = [
+            sample_ingredient(user=self.user),
+            sample_ingredient(user=self.user)
+        ]
+        new_ingredients = [
+            sample_ingredient(user=self.user, name='Ingredient 1'),
+            sample_ingredient(user=self.user, name='Ingredient 2')
+        ]
+        tags = [
+            sample_tag(user=self.user),
+            sample_tag(user=self.user)
+        ]
+        new_tags = [
+            sample_tag(user=self.user, name='Tag 1'),
+            sample_tag(user=self.user, name='Tag 2')
+        ]
+
+        recipe = sample_recipe(user=self.user)
+        for ingredient in ingredients:
+            recipe.ingredients.add(ingredient)
+        for tag in tags:
+            recipe.tags.add(tag)
+
+        payload = {
+            'title': 'My new title',
+            'price': 100,
+            'time_minutes': 30,
+            'ingredients': [ingredient.id for ingredient in new_ingredients],
+            'tags': [tag.id for tag in new_tags]
+        }
+        res = self.client.put(detail_url(recipe.id), payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        recipe.refresh_from_db()
+        for key in payload.keys():
+            if key == 'ingredients' or key == 'tags':
+                continue
+            else:
+                self.assertEqual(payload[key], getattr(recipe, key))
+        for ingredient in recipe.ingredients.all():
+            self.assertIn(ingredient, new_ingredients)
+        for tag in recipe.tags.all():
+            self.assertIn(tag, new_tags)
