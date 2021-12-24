@@ -121,6 +121,10 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = '/vol/web/media'
 STATIC_ROOT = '/vol/web/static'
 
+if 'test' in sys.argv:
+    MEDIA_ROOT = './core/tests/vol/web/media'
+    STATIC_ROOT = './core/tests/vol/web/static'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
