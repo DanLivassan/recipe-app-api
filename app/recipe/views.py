@@ -52,6 +52,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return serializers.RecipeDetailSerializer
         elif self.action == 'upload_image':
             return serializers.RecipeImageSerializer
+        elif self.action == 'search_recipe':
+            return serializers.RecipeSerializer
 
         return self.serializer_class
 
@@ -78,3 +80,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['GET'], detail=False, url_path='search-recipe')
+    def search_recipe(self, request):
+        ingredient_name = request.query_params.get('ingredient')
+        tag_name = request.query_params.get('tag')
+        ingredients = Ingredient.objects.all().filter(name__contains=ingredient_name) if ingredient_name else []
+        tags = Tag.objects.all().filter(name__contains=tag_name) if tag_name else []
+        recipes = Recipe.objects.all().filter(user=self.request.user)
+        if ingredients:
+            recipes = recipes.filter(ingredients__in=ingredients)
+        if tags:
+            recipes = recipes.filter(tags__in=tags)
+        serializer = serializers.RecipeSerializer(recipes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -52,6 +52,11 @@ def image_upload_url(recipe_id):
     return reverse('recipe:recipe-upload-image', args=[recipe_id])
 
 
+def search_url():
+    """Return URL for search recipe"""
+    return reverse('recipe:recipe-search-recipe')
+
+
 class PublicRecipeApiTests(TestCase):
     """ Tests recipe api not authenticated users """
 
@@ -265,3 +270,61 @@ class RecipeImageUploadTest(TestCase):
         url = image_upload_url(self.recipe.id)
         res = self.client.post(url, {'image': 'imagem'}, format='multipart')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_search_by_ingredient(self):
+        """Test searching recipe by ingredient name"""
+        ingredient_name = 'First Ingredient'
+        ingredient = sample_ingredient(user=self.user, name=ingredient_name)
+        query_params = {
+            'ingredient': ingredient_name[3:8],
+        }
+        recipe_raw = {
+            'title': 'My recipe',
+            'price': 100,
+            'time_minutes': 20,
+        }
+        recipe_raw2 = {
+            'title': 'My second recipe',
+            'price': 100,
+            'time_minutes': 20,
+        }
+        recipe1 = sample_recipe(user=self.user, **recipe_raw)
+        recipe2 = sample_recipe(user=self.user, **recipe_raw2)
+        sample_recipe(user=self.user, **recipe_raw)
+        recipe1.ingredients.add(ingredient)
+        recipe2.ingredients.add(ingredient)
+
+        res = self.client.get(search_url(), query_params)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+        serializer = RecipeSerializer([recipe1, recipe2], many=True)
+        self.assertEqual(serializer.data, res.data)
+
+    def test_search_by_tag(self):
+        """Test searching recipe by tag name"""
+        tag_name = 'First tag'
+        tag = sample_tag(user=self.user, name=tag_name)
+        query_params = {
+            'tag': tag_name[1:5],
+        }
+        recipe_raw = {
+            'title': 'My recipe',
+            'price': 100,
+            'time_minutes': 20,
+        }
+        recipe_raw2 = {
+            'title': 'My second recipe',
+            'price': 100,
+            'time_minutes': 20,
+        }
+        recipe1 = sample_recipe(user=self.user, **recipe_raw)
+        recipe2 = sample_recipe(user=self.user, **recipe_raw2)
+        sample_recipe(user=self.user, **recipe_raw)
+        recipe1.tags.add(tag)
+        recipe2.tags.add(tag)
+
+        res = self.client.get(search_url(), query_params)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 2)
+        serializer = RecipeSerializer([recipe1, recipe2], many=True)
+        self.assertEqual(serializer.data, res.data)
